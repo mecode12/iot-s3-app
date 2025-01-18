@@ -40,7 +40,11 @@ app.get('/status', (req, res) => {
 app.get('/list-data', async (req, res) => {
   try {
     // Melakukan POST request ke API Gateway untuk mengambil data dari DynamoDB
-    const response = await axios.post(`${API_GATEWAY_URL}/prod/data-dynamodb`);
+    const response = await axios.post(`${API_GATEWAY_URL}/prod/data-dynamodb`, {}, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
     // Cek apakah Items ada dalam respons
     const items = response.data.Items;
