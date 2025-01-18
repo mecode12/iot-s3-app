@@ -7,10 +7,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_GATEWAY_URL = process.env.API_GATEWAY_URL;
 
+// ambil data dari s3
 app.get('/list-files', async (req, res) => {
   try {
     // Fetch data dari API Gateway
-    const response = await axios.get(API_GATEWAY_URL);
+    const response = await axios.get(`${API_GATEWAY_URL}/prod/data-s3`);
 
     // Parsing XML ke JSON
     const parser = new xml2js.Parser({ explicitArray: false });
@@ -33,6 +34,28 @@ app.get('/list-files', async (req, res) => {
 // Endpoint untuk status
 app.get('/status', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Endpoint untuk list-data, panggil API Gateway untuk scan DynamoDB
+app.get('/list-data', async (req, res) => {
+  try {
+    // Melakukan POST request ke API Gateway untuk mengambil data dari DynamoDB
+    const response = await axios.post(`${API_GATEWAY_URL}/prod/data-dynamodb`);
+
+    // Cek apakah Items ada dalam respons
+    const items = response.data.Items;
+
+    if (items && items.length > 0) {
+      // Ekstrak semua nilai msg dan gabungkan menjadi satu string
+      const msgs = items.map(item => item.msg.S);
+      res.send(`Messages: ${msgs.join(', ')}`);
+    } else {
+      res.send('No data found.');
+    }
+  } catch (error) {
+    console.error('Error fetching data from API Gateway:', error.message);
+    res.status(500).send('Failed to fetch data from API Gateway');
+  }
 });
 
 app.listen(PORT, () => {
